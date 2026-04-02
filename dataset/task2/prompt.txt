@@ -1,0 +1,9 @@
+Implement parallel matrix multiplication in C++17 using OpenMP.
+
+Requirements:
+- Provide a function:
+  `std::vector<std::vector<int>> parallel_matrix_multiply(const std::vector<std::vector<int>>& a, const std::vector<std::vector<int>>& b);`
+- Validate dimensions and throw `std::invalid_argument` if the matrices are empty or incompatible.
+- Use OpenMP to parallelize the multiplication over rows and columns.
+- The solution must still compile on systems where OpenMP is enabled with `-fopenmp`.
+- Return exactly one self-contained C++17 source file with no `main`.

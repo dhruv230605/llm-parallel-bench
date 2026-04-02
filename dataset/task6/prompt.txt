@@ -1,0 +1,9 @@
+Implement parallel prefix sum in C++17.
+
+Requirements:
+- Provide a function:
+  `std::vector<long long> parallel_prefix_sum(const std::vector<int>& input);`
+- Return an inclusive prefix sum.
+- Use multiple threads to process blocks in parallel.
+- The implementation should work for empty input and arbitrary integer values.
+- Return exactly one self-contained C++17 source file with no `main`.

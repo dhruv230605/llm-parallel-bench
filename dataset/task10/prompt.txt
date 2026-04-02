@@ -1,0 +1,13 @@
+Implement a concurrent hash map in C++17.
+
+Requirements:
+- Provide a class `ConcurrentHashMap` with this public API:
+  - `explicit ConcurrentHashMap(std::size_t bucket_count);`
+  - `void put(int key, int value);`
+  - `bool get(int key, int& value) const;`
+  - `void increment(int key, int delta);`
+  - `std::size_t size() const;`
+- Use bucket-level locking with separate mutexes to support concurrent access.
+- `put` should insert or overwrite a value.
+- `increment` should atomically add `delta` to an existing key or insert the key if missing.
+- Return exactly one self-contained C++17 source file with no `main`.

@@ -1,0 +1,12 @@
+Implement a simple work-stealing scheduler in C++17.
+
+Requirements:
+- Provide a class `WorkStealingScheduler` with this public API:
+  - `explicit WorkStealingScheduler(std::size_t worker_count);`
+  - `~WorkStealingScheduler();`
+  - `void submit(std::function<void()> task);`
+  - `void wait();`
+- Each worker should own a local deque of tasks.
+- Idle workers should attempt to steal work from the back of other workers' deques.
+- `wait` should block until all scheduled tasks are finished.
+- Return exactly one self-contained C++17 source file with no `main`.

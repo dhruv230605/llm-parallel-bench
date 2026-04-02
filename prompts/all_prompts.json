@@ -1,0 +1,126 @@
+{
+  "domain": "Parallel Programming in C++",
+  "tasks": [
+    {
+      "task_name": "task1",
+      "title": "Thread Pool",
+      "prompt": "Implement a fixed-size thread pool in C++17 for CPU-bound integer tasks. Provide class ThreadPool with constructor ThreadPool(std::size_t), destructor, std::future<int> enqueue(std::function<int()>), and void wait_for_tasks(). Use std::thread, std::mutex, std::condition_variable, and std::future. The destructor must stop workers cleanly. Return one self-contained C++17 source file with no main.",
+      "reference": "dataset/task1/reference.cpp",
+      "tests": ["dataset/task1/tests/test1.cpp"],
+      "tags": ["threads", "thread_pool", "mutex", "condition_variable", "future"],
+      "compile": {
+        "openmp": false,
+        "mpi": false
+      }
+    },
+    {
+      "task_name": "task2",
+      "title": "Parallel Matrix Multiplication with OpenMP",
+      "prompt": "Implement std::vector<std::vector<int>> parallel_matrix_multiply(const std::vector<std::vector<int>>& a, const std::vector<std::vector<int>>& b) in C++17. Validate dimensions, throw std::invalid_argument for empty or incompatible matrices, and use OpenMP to parallelize the multiplication. Return one self-contained C++17 source file with no main.",
+      "reference": "dataset/task2/reference.cpp",
+      "tests": ["dataset/task2/tests/test1.cpp"],
+      "tags": ["openmp", "parallel", "matrix", "shared_memory"],
+      "compile": {
+        "openmp": true,
+        "mpi": false
+      }
+    },
+    {
+      "task_name": "task3",
+      "title": "Producer Consumer Queue",
+      "prompt": "Implement a bounded producer-consumer queue in C++17 using a mutex and condition variables. Provide class ProducerConsumerQueue with constructor(capacity), push(int), bool pop(int&), and close(). push blocks when full, pop blocks when empty and returns false only after close and drain. Return one self-contained C++17 source file with no main.",
+      "reference": "dataset/task3/reference.cpp",
+      "tests": ["dataset/task3/tests/test1.cpp"],
+      "tags": ["producer", "consumer", "mutex", "condition_variable", "concurrent"],
+      "compile": {
+        "openmp": false,
+        "mpi": false
+      }
+    },
+    {
+      "task_name": "task4",
+      "title": "Lock-Free Queue",
+      "prompt": "Implement a bounded lock-free queue for integers in C++17. Provide class LockFreeQueue with constructor(capacity), bool enqueue(int), and bool dequeue(int&). Support multiple producers and consumers using atomics and compare-exchange. Do not use mutexes in the hot path. Return one self-contained C++17 source file with no main.",
+      "reference": "dataset/task4/reference.cpp",
+      "tests": ["dataset/task4/tests/test1.cpp"],
+      "tags": ["lock_free", "atomic", "concurrent", "queue"],
+      "compile": {
+        "openmp": false,
+        "mpi": false
+      }
+    },
+    {
+      "task_name": "task5",
+      "title": "Parallel Quicksort",
+      "prompt": "Implement void parallel_quicksort(std::vector<int>& values) in C++17. Use task parallelism with std::async, std::future, or worker threads and include a sequential fallback for small partitions. Return one self-contained C++17 source file with no main.",
+      "reference": "dataset/task5/reference.cpp",
+      "tests": ["dataset/task5/tests/test1.cpp"],
+      "tags": ["parallel", "quicksort", "async", "future"],
+      "compile": {
+        "openmp": false,
+        "mpi": false
+      }
+    },
+    {
+      "task_name": "task6",
+      "title": "Parallel Prefix Sum",
+      "prompt": "Implement std::vector<long long> parallel_prefix_sum(const std::vector<int>& input) in C++17. Return an inclusive prefix sum, use multiple threads to process blocks in parallel, and handle empty input correctly. Return one self-contained C++17 source file with no main.",
+      "reference": "dataset/task6/reference.cpp",
+      "tests": ["dataset/task6/tests/test1.cpp"],
+      "tags": ["parallel", "prefix_sum", "threads", "shared_memory"],
+      "compile": {
+        "openmp": false,
+        "mpi": false
+      }
+    },
+    {
+      "task_name": "task7",
+      "title": "MPI Reduce",
+      "prompt": "Implement int mpi_sum_reduce(const std::vector<int>& local_values, MPI_Comm comm) in C++17. Compute the local sum and perform a global reduction across all ranks using MPI collectives. Return the global sum to every rank. Return one self-contained C++17 source file with no main.",
+      "reference": "dataset/task7/reference.cpp",
+      "tests": ["dataset/task7/tests/test1.cpp"],
+      "tags": ["mpi", "reduce", "parallel", "distributed"],
+      "compile": {
+        "openmp": false,
+        "mpi": true,
+        "mpi_processes": 2
+      }
+    },
+    {
+      "task_name": "task8",
+      "title": "Parallel BFS",
+      "prompt": "Implement std::vector<int> parallel_bfs_levels(const std::vector<std::vector<int>>& graph, int source) in C++17. Return BFS distances from the source, use -1 for unreachable nodes, and process each frontier in parallel using multiple threads while avoiding duplicate visits. Return one self-contained C++17 source file with no main.",
+      "reference": "dataset/task8/reference.cpp",
+      "tests": ["dataset/task8/tests/test1.cpp"],
+      "tags": ["parallel", "bfs", "graph", "threads"],
+      "compile": {
+        "openmp": false,
+        "mpi": false
+      }
+    },
+    {
+      "task_name": "task9",
+      "title": "Work-Stealing Scheduler",
+      "prompt": "Implement a simple work-stealing scheduler in C++17. Provide class WorkStealingScheduler with constructor(worker_count), destructor, submit(std::function<void()>), and wait(). Each worker owns a local deque and idle workers steal tasks from the back of other workers' deques. Return one self-contained C++17 source file with no main.",
+      "reference": "dataset/task9/reference.cpp",
+      "tests": ["dataset/task9/tests/test1.cpp"],
+      "tags": ["work_stealing", "threads", "scheduler", "concurrent"],
+      "compile": {
+        "openmp": false,
+        "mpi": false
+      }
+    },
+    {
+      "task_name": "task10",
+      "title": "Concurrent Hash Map",
+      "prompt": "Implement a concurrent hash map in C++17. Provide class ConcurrentHashMap with constructor(bucket_count), put(int,int), bool get(int,int&) const, increment(int,int), and size() const. Use bucket-level locking with separate mutexes to support concurrent access. Return one self-contained C++17 source file with no main.",
+      "reference": "dataset/task10/reference.cpp",
+      "tests": ["dataset/task10/tests/test1.cpp"],
+      "tags": ["concurrent", "hash_map", "mutex", "parallel"],
+      "compile": {
+        "openmp": false,
+        "mpi": false
+      }
+    }
+  ]
+}

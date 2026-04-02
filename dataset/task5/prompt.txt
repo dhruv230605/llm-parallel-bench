@@ -1,0 +1,9 @@
+Implement parallel quicksort in C++17.
+
+Requirements:
+- Provide a function:
+  `void parallel_quicksort(std::vector<int>& values);`
+- Use task parallelism with `std::async`, `std::future`, or worker threads.
+- Use a sequential fallback for small partitions to avoid excessive thread overhead.
+- The result must be a fully sorted vector in ascending order.
+- Return exactly one self-contained C++17 source file with no `main`.

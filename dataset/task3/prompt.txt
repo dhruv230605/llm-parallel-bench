@@ -1,0 +1,13 @@
+Implement a bounded producer-consumer queue in C++17 using a mutex and condition variables.
+
+Requirements:
+- Provide a class `ProducerConsumerQueue` with this public API:
+  - `explicit ProducerConsumerQueue(std::size_t capacity);`
+  - `void push(int value);`
+  - `bool pop(int& value);`
+  - `void close();`
+- `push` should block when the queue is full.
+- `pop` should block when the queue is empty and return `false` only when the queue is closed and drained.
+- `close` should wake all waiting threads.
+- Use `std::mutex`, `std::condition_variable`, and `std::queue`.
+- Return exactly one self-contained C++17 source file with no `main`.

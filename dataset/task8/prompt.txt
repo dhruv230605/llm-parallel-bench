@@ -1,0 +1,9 @@
+Implement level-synchronous parallel BFS in C++17.
+
+Requirements:
+- Provide a function:
+  `std::vector<int> parallel_bfs_levels(const std::vector<std::vector<int>>& graph, int source);`
+- Return a vector of distances from `source`, with `-1` for unreachable nodes.
+- Process each BFS frontier in parallel using multiple threads.
+- Avoid visiting the same node more than once.
+- Return exactly one self-contained C++17 source file with no `main`.

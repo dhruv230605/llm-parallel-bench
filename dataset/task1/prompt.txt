@@ -1,0 +1,14 @@
+Implement a fixed-size thread pool in C++17 for CPU-bound integer tasks.
+
+Requirements:
+- Provide a class `ThreadPool` with this public API:
+  - `explicit ThreadPool(std::size_t num_threads);`
+  - `~ThreadPool();`
+  - `std::future<int> enqueue(std::function<int()> task);`
+  - `void wait_for_tasks();`
+- `enqueue` must schedule a task and return a future for the integer result.
+- Worker threads should wait on a condition variable instead of busy-spinning.
+- `wait_for_tasks` should block until the task queue is empty and all scheduled tasks have completed.
+- The destructor must cleanly stop the worker threads and join them.
+- Use `std::thread`, `std::mutex`, `std::condition_variable`, and `std::future`.
+- Return exactly one self-contained C++17 source file with no `main`.

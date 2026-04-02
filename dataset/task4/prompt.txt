@@ -1,0 +1,12 @@
+Implement a bounded lock-free queue for integers in C++17.
+
+Requirements:
+- Provide a class `LockFreeQueue` with this public API:
+  - `explicit LockFreeQueue(std::size_t capacity);`
+  - `bool enqueue(int value);`
+  - `bool dequeue(int& value);`
+- The queue should support multiple producers and multiple consumers.
+- Do not use `std::mutex` or `std::condition_variable` in the hot path.
+- Use atomics and compare-exchange operations to coordinate access.
+- Return `false` from `enqueue` when the queue is full, and `false` from `dequeue` when the queue is empty.
+- Return exactly one self-contained C++17 source file with no `main`.

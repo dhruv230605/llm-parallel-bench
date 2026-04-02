@@ -1,0 +1,9 @@
+Implement an MPI-based sum reduction in C++17.
+
+Requirements:
+- Provide a function:
+  `int mpi_sum_reduce(const std::vector<int>& local_values, MPI_Comm comm);`
+- Compute the sum of the local vector on each rank and perform a global reduction across all ranks.
+- Return the globally reduced sum to every rank.
+- Use MPI collectives and include the required MPI headers.
+- Return exactly one self-contained C++17 source file with no `main`.
