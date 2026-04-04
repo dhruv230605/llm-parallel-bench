@@ -6,7 +6,6 @@ from pathlib import Path
 
 from evaluation.compile_and_run import evaluate_candidate
 
-
 @dataclass
 class TesterAgent:
     def test_code(self, task_name: str, code: str) -> dict:

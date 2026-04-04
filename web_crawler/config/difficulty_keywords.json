@@ -1,0 +1,47 @@
+{
+  "threshold": 45,
+  "keyword_weights": {
+    "thread": 8,
+    "mutex": 9,
+    "condition_variable": 8,
+    "atomic": 10,
+    "lock-free": 12,
+    "lock free": 12,
+    "race": 10,
+    "deadlock": 12,
+    "thread pool": 10,
+    "work stealing": 12,
+    "parallel": 8,
+    "openmp": 9,
+    "mpi": 10,
+    "distributed": 10,
+    "concurrent": 8,
+    "scheduler": 9,
+    "future": 7,
+    "async": 7,
+    "barrier": 8,
+    "reader-writer": 8,
+    "graph": 6,
+    "bfs": 8,
+    "performance": 6,
+    "throughput": 6,
+    "latency": 6,
+    "memory model": 12,
+    "ordering": 8,
+    "linearizable": 12
+  },
+  "source_type_bonus": {
+    "issue": 8,
+    "pull_request": 10,
+    "commit": 7,
+    "todo_comment": 9,
+    "example_file": 6,
+    "code_search": 5
+  },
+  "structural_bonus": {
+    "synchronization_hazard": 15,
+    "framework": 10,
+    "multi_file": 8,
+    "performance": 7
+  }
+}

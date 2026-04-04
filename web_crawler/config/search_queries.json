@@ -1,0 +1,16 @@
+{
+  "queries": [
+    "thread pool C++",
+    "lock free queue C++",
+    "parallel quicksort C++",
+    "OpenMP matrix multiplication",
+    "MPI reduce C++",
+    "concurrent hash map C++",
+    "producer consumer C++ threads",
+    "work stealing scheduler C++",
+    "parallel BFS C++",
+    "distributed key value store C++",
+    "barrier synchronization C++",
+    "async task scheduler C++"
+  ]
+}
