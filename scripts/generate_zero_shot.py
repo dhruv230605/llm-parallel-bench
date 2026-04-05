@@ -47,16 +47,26 @@ def generate_zero_shot(
     catalog = load_task_catalog()
     selected_tasks = select_tasks(catalog, tasks)
     client = LLMClient(backend=backend, api_base=api_base, api_key=api_key, temperature=temperature)
+    print(
+        f"[zero-shot] backend={backend} models={list(models)} tasks={len(selected_tasks)} attempts={attempts}",
+        flush=True,
+    )
 
     for model in models:
         model_dir = output_root / sanitize_name(model)
         model_dir.mkdir(parents=True, exist_ok=True)
+        print(f"[zero-shot] model={model} start", flush=True)
         for task_name in selected_tasks:
             entry = catalog[task_name]
             prompt = entry["prompt"]
             reference_path = REPO_ROOT / entry["reference"]
             latest_attempt_path = None
+            print(f"[zero-shot] model={model} task={task_name} start", flush=True)
             for attempt_index in range(1, attempts + 1):
+                print(
+                    f"[zero-shot] model={model} task={task_name} attempt={attempt_index}/{attempts}",
+                    flush=True,
+                )
                 code = client.generate_code(model, prompt, reference_path=reference_path)
                 attempt_path = model_dir / f"{task_name}_attempt{attempt_index:02d}.cpp"
                 attempt_path.write_text(code + "\n", encoding="utf-8")
@@ -64,11 +74,17 @@ def generate_zero_shot(
 
             if latest_attempt_path is not None:
                 shutil.copyfile(latest_attempt_path, model_dir / f"{task_name}.cpp")
+            print(f"[zero-shot] model={model} task={task_name} done", flush=True)
+        print(f"[zero-shot] model={model} done", flush=True)
 
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Generate zero-shot C++ solutions for the benchmark.")
-    parser.add_argument("--models", nargs="+", default=["gemini", "model2", "model3"])
+    parser.add_argument(
+        "--models",
+        nargs="+",
+        default=["gpt-4.1-mini", "meta/llama-3.1-8b-instruct", "qwen/qwen2.5-coder-32b-instruct"],
+    )
     parser.add_argument("--tasks", nargs="*")
     parser.add_argument("--attempts", type=int, default=10)
     parser.add_argument("--backend", choices=["openai_compatible", "reference"], default="openai_compatible")

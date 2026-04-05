@@ -5,7 +5,7 @@ import os
 import re
 import urllib.error
 import urllib.request
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Iterable, Optional
 
@@ -14,6 +14,9 @@ DEFAULT_SYSTEM_PROMPT = (
     "You are an expert C++ parallel programming assistant. "
     "Return exactly one compilable C++17 source file and no Markdown fences."
 )
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+DEFAULT_REGISTRY_PATH = REPO_ROOT / "model_registry.json"
 
 
 def sanitize_name(value: str) -> str:
@@ -28,6 +31,13 @@ def strip_code_fences(text: str) -> str:
     return text.strip()
 
 
+def load_model_registry(path: Path = DEFAULT_REGISTRY_PATH) -> dict:
+    if not path.exists():
+        return {}
+    with path.open("r", encoding="utf-8") as handle:
+        return json.load(handle)
+
+
 @dataclass
 class LLMClient:
     backend: str = "openai_compatible"
@@ -35,21 +45,49 @@ class LLMClient:
     api_key: Optional[str] = None
     temperature: float = 0.2
     timeout: int = 120
+    _registry: dict = field(default_factory=dict, repr=False)
 
     def __post_init__(self) -> None:
         self.api_base = self.api_base or os.environ.get("LLM_API_BASE")
         self.api_key = self.api_key or os.environ.get("LLM_API_KEY")
+        if not self._registry:
+            self._registry = load_model_registry()
+
+    def _resolve_endpoint(self, model: str) -> tuple[str, str]:
+        """Return (api_base, api_key) for the given model.
+
+        Uses the model registry when available; falls back to default fields.
+        """
+        registry = self._registry
+        providers = registry.get("providers", {})
+        models = registry.get("models", {})
+
+        if model in models:
+            provider_name = models[model].get("provider")
+            provider = providers.get(provider_name, {})
+            base = provider.get("api_base")
+            key_env = provider.get("api_key_env")
+            key = os.environ.get(key_env, "") if key_env else ""
+            if base and key:
+                return base, key
+
+        # Fall back to instance defaults
+        if self.api_base and self.api_key:
+            return self.api_base, self.api_key
+
+        raise RuntimeError(
+            f"No API endpoint resolved for model '{model}'. "
+            "Set the provider key in the environment, update model_registry.json, "
+            "or pass --api-base / --api-key explicitly."
+        )
 
     def complete(self, model: str, messages: Iterable[dict], temperature: Optional[float] = None) -> str:
         if self.backend == "reference":
             raise RuntimeError("Text completion is unavailable for the reference backend.")
         if self.backend != "openai_compatible":
             raise ValueError(f"Unsupported backend: {self.backend}")
-        if not self.api_base or not self.api_key:
-            raise RuntimeError(
-                "Missing LLM_API_BASE or LLM_API_KEY. "
-                "Set them in the environment or use --backend reference for a smoke test."
-            )
+
+        api_base, api_key = self._resolve_endpoint(model)
 
         payload = {
             "model": model,
@@ -57,11 +95,11 @@ class LLMClient:
             "temperature": self.temperature if temperature is None else temperature,
         }
         request = urllib.request.Request(
-            url=self.api_base.rstrip("/") + "/chat/completions",
+            url=api_base.rstrip("/") + "/chat/completions",
             data=json.dumps(payload).encode("utf-8"),
             headers={
                 "Content-Type": "application/json",
-                "Authorization": f"Bearer {self.api_key}",
+                "Authorization": f"Bearer {api_key}",
             },
             method="POST",
         )

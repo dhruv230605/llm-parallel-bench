@@ -18,6 +18,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--api-base")
     parser.add_argument("--api-key")
     parser.add_argument("--max-rounds", type=int, default=3)
+    parser.add_argument("--attempts", type=int, default=10)
     parser.add_argument("--temperature", type=float, default=0.2)
     return parser
 
@@ -31,6 +32,7 @@ def main() -> None:
         api_base=args.api_base,
         api_key=args.api_key,
         max_rounds=args.max_rounds,
+        attempts=args.attempts,
         temperature=args.temperature,
     )
 
