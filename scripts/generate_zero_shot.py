@@ -4,6 +4,7 @@ import argparse
 import json
 import shutil
 import sys
+from datetime import datetime
 from pathlib import Path
 from typing import Iterable, Sequence
 
@@ -16,6 +17,10 @@ from scripts.llm_client import LLMClient, sanitize_name
 REPO_ROOT = Path(__file__).resolve().parents[1]
 CATALOG_PATH = REPO_ROOT / "prompts" / "all_prompts.json"
 GENERATED_ROOT = REPO_ROOT / "generated_code"
+
+
+def log_event(message: str) -> None:
+    print(f"[{datetime.now().isoformat(timespec='seconds')}] {message}", flush=True)
 
 
 def load_task_catalog(catalog_path: Path = CATALOG_PATH) -> dict:
@@ -47,26 +52,22 @@ def generate_zero_shot(
     catalog = load_task_catalog()
     selected_tasks = select_tasks(catalog, tasks)
     client = LLMClient(backend=backend, api_base=api_base, api_key=api_key, temperature=temperature)
-    print(
+    log_event(
         f"[zero-shot] backend={backend} models={list(models)} tasks={len(selected_tasks)} attempts={attempts}",
-        flush=True,
     )
 
     for model in models:
         model_dir = output_root / sanitize_name(model)
         model_dir.mkdir(parents=True, exist_ok=True)
-        print(f"[zero-shot] model={model} start", flush=True)
+        log_event(f"[zero-shot] model={model} start")
         for task_name in selected_tasks:
             entry = catalog[task_name]
             prompt = entry["prompt"]
             reference_path = REPO_ROOT / entry["reference"]
             latest_attempt_path = None
-            print(f"[zero-shot] model={model} task={task_name} start", flush=True)
+            log_event(f"[zero-shot] model={model} task={task_name} start")
             for attempt_index in range(1, attempts + 1):
-                print(
-                    f"[zero-shot] model={model} task={task_name} attempt={attempt_index}/{attempts}",
-                    flush=True,
-                )
+                log_event(f"[zero-shot] model={model} task={task_name} attempt={attempt_index}/{attempts}")
                 code = client.generate_code(model, prompt, reference_path=reference_path)
                 attempt_path = model_dir / f"{task_name}_attempt{attempt_index:02d}.cpp"
                 attempt_path.write_text(code + "\n", encoding="utf-8")
@@ -74,8 +75,8 @@ def generate_zero_shot(
 
             if latest_attempt_path is not None:
                 shutil.copyfile(latest_attempt_path, model_dir / f"{task_name}.cpp")
-            print(f"[zero-shot] model={model} task={task_name} done", flush=True)
-        print(f"[zero-shot] model={model} done", flush=True)
+            log_event(f"[zero-shot] model={model} task={task_name} done")
+        log_event(f"[zero-shot] model={model} done")
 
 
 def build_parser() -> argparse.ArgumentParser:

@@ -18,6 +18,10 @@ from scripts.llm_client import load_model_registry
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
 
+def log_event(message: str) -> None:
+    print(f"[{datetime.now().isoformat(timespec='seconds')}] {message}", flush=True)
+
+
 def _model_preflight_rows(args: argparse.Namespace) -> tuple[list[str], list[str]]:
     rows: list[str] = []
     missing: list[str] = []
@@ -57,25 +61,25 @@ def _model_preflight_rows(args: argparse.Namespace) -> tuple[list[str], list[str
 
 
 def log_preflight(args: argparse.Namespace) -> None:
-    print("[benchmark] started", flush=True)
-    print(f"[preflight] timestamp={datetime.now().isoformat(timespec='seconds')}", flush=True)
-    print(f"[preflight] repo_root={REPO_ROOT}", flush=True)
-    print(f"[preflight] python={sys.executable}", flush=True)
-    print(f"[preflight] backend={args.backend}", flush=True)
-    print(f"[preflight] tasks={args.tasks if args.tasks else 'all'}", flush=True)
-    print(f"[preflight] attempts={args.attempts}", flush=True)
-    print(f"[preflight] max_rounds={args.max_rounds}", flush=True)
-    print(f"[preflight] temperature={args.temperature}", flush=True)
-    print(f"[preflight] zero_shot_models={args.zero_shot_models}", flush=True)
-    print(f"[preflight] agent_models={args.agent_models}", flush=True)
-    print(f"[preflight] skip_zero_shot={args.skip_zero_shot}", flush=True)
-    print(f"[preflight] skip_agent={args.skip_agent}", flush=True)
-    print(f"[preflight] api_base_override={'set' if args.api_base else 'unset'}", flush=True)
-    print(f"[preflight] api_key_override={'set' if args.api_key else 'unset'}", flush=True)
+    log_event("[benchmark] started")
+    log_event(f"[preflight] timestamp={datetime.now().isoformat(timespec='seconds')}")
+    log_event(f"[preflight] repo_root={REPO_ROOT}")
+    log_event(f"[preflight] python={sys.executable}")
+    log_event(f"[preflight] backend={args.backend}")
+    log_event(f"[preflight] tasks={args.tasks if args.tasks else 'all'}")
+    log_event(f"[preflight] attempts={args.attempts}")
+    log_event(f"[preflight] max_rounds={args.max_rounds}")
+    log_event(f"[preflight] temperature={args.temperature}")
+    log_event(f"[preflight] zero_shot_models={args.zero_shot_models}")
+    log_event(f"[preflight] agent_models={args.agent_models}")
+    log_event(f"[preflight] skip_zero_shot={args.skip_zero_shot}")
+    log_event(f"[preflight] skip_agent={args.skip_agent}")
+    log_event(f"[preflight] api_base_override={'set' if args.api_base else 'unset'}")
+    log_event(f"[preflight] api_key_override={'set' if args.api_key else 'unset'}")
 
     rows, missing = _model_preflight_rows(args)
     for row in rows:
-        print(row, flush=True)
+        log_event(row)
 
     if missing:
         joined = ", ".join(missing)
@@ -84,7 +88,7 @@ def log_preflight(args: argparse.Namespace) -> None:
             f"{joined}. Set provider-specific keys in environment or pass --api-key."
         )
 
-    print("[preflight] checks=ok", flush=True)
+    log_event("[preflight] checks=ok")
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -118,9 +122,8 @@ def main() -> None:
     log_preflight(args)
 
     if not args.skip_zero_shot:
-        print(
+        log_event(
             f"[benchmark] zero-shot start models={args.zero_shot_models} attempts={args.attempts}",
-            flush=True,
         )
         generate_zero_shot(
             args.zero_shot_models,
@@ -138,12 +141,11 @@ def main() -> None:
             tasks=args.tasks,
         )
         write_results(zero_rows, REPO_ROOT / "results" / "zero_shot_scores.csv")
-        print("[benchmark] zero-shot done", flush=True)
+        log_event("[benchmark] zero-shot done")
 
     if not args.skip_agent:
-        print(
+        log_event(
             f"[benchmark] agent start models={args.agent_models} max_rounds={args.max_rounds} attempts={args.attempts}",
-            flush=True,
         )
         run_agent_benchmark(
             args.agent_models,
@@ -162,11 +164,11 @@ def main() -> None:
             tasks=args.tasks,
         )
         write_results(agent_rows, REPO_ROOT / "results" / "agent_scores.csv")
-        print("[benchmark] agent done", flush=True)
+        log_event("[benchmark] agent done")
 
     combined = combine_results(zero_rows, agent_rows)
     write_results(combined, REPO_ROOT / "results" / "comparison.csv")
-    print("[benchmark] completed", flush=True)
+    log_event("[benchmark] completed")
 
 
 if __name__ == "__main__":

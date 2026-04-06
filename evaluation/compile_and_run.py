@@ -16,6 +16,7 @@ if __package__ in {None, ""}:
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 CATALOG_PATH = REPO_ROOT / "prompts" / "all_prompts.json"
+DEFAULT_RUN_TIMEOUT_SECONDS = 20
 
 
 @dataclass
@@ -105,12 +106,23 @@ def evaluate_candidate(task_name: str, candidate_path: Path) -> dict[str, Any]:
         test_path = REPO_ROOT / relative_test_path
         with tempfile.TemporaryDirectory(prefix=f"{task_name}_") as tmp_dir_name:
             tmp_dir = Path(tmp_dir_name)
+            # Create subdirectory structure to match original layout for includes to work
+            tests_subdir = tmp_dir / "tests"
+            tests_subdir.mkdir(parents=True, exist_ok=True)
+            
+            # Copy test file to tests subdirectory
+            shutil.copy2(test_path, tests_subdir / test_path.name)
+            
+            # Copy candidate so both include styles work:
+            # - #include "../code.cpp"  → tmp_dir/code.cpp  (resolved from tests_subdir)
+            # - #include "solution.cpp" → tests_subdir/solution.cpp (resolved from tests_subdir)
+            shutil.copy2(candidate_path, tmp_dir / "code.cpp")
             shutil.copy2(candidate_path, tmp_dir / "solution.cpp")
-            shutil.copy2(test_path, tmp_dir / test_path.name)
+            shutil.copy2(candidate_path, tests_subdir / "solution.cpp")
 
             executable = tmp_dir / ("test_exec.exe" if sys.platform.startswith("win") else "test_exec")
             flags = compile_flags(entry)
-            compile_cmd = [compiler, *flags, test_path.name, "-o", str(executable)]
+            compile_cmd = [compiler, *flags, str(tests_subdir / test_path.name), "-o", str(executable)]
             compile_proc = subprocess.run(
                 compile_cmd,
                 cwd=tmp_dir,
@@ -121,7 +133,7 @@ def evaluate_candidate(task_name: str, candidate_path: Path) -> dict[str, Any]:
             if compile_proc.returncode != 0:
                 fallback_flags = fallback_compile_flags(entry, flags)
                 if fallback_flags is not None:
-                    fallback_cmd = [compiler, *fallback_flags, test_path.name, "-o", str(executable)]
+                    fallback_cmd = [compiler, *fallback_flags, str(tests_subdir / test_path.name), "-o", str(executable)]
                     fallback_proc = subprocess.run(
                         fallback_cmd,
                         cwd=tmp_dir,
@@ -164,26 +176,42 @@ def evaluate_candidate(task_name: str, candidate_path: Path) -> dict[str, Any]:
                 )
                 continue
 
-            run_proc = subprocess.run(
-                run_cmd,
-                cwd=tmp_dir,
-                text=True,
-                capture_output=True,
-                check=False,
-            )
-            status = "passed" if run_proc.returncode == 0 else "runtime_error"
-            test_results.append(
-                TestExecutionResult(
-                    test_file=relative_test_path,
-                    passed=run_proc.returncode == 0,
-                    status=status,
-                    compiler=compiler,
-                    compile_command=compile_cmd,
-                    run_command=run_cmd,
-                    stdout=run_proc.stdout,
-                    stderr=run_proc.stderr,
+            try:
+                run_proc = subprocess.run(
+                    run_cmd,
+                    cwd=tmp_dir,
+                    text=True,
+                    capture_output=True,
+                    check=False,
+                    timeout=DEFAULT_RUN_TIMEOUT_SECONDS,
                 )
-            )
+                status = "passed" if run_proc.returncode == 0 else "runtime_error"
+                test_results.append(
+                    TestExecutionResult(
+                        test_file=relative_test_path,
+                        passed=run_proc.returncode == 0,
+                        status=status,
+                        compiler=compiler,
+                        compile_command=compile_cmd,
+                        run_command=run_cmd,
+                        stdout=run_proc.stdout,
+                        stderr=run_proc.stderr,
+                    )
+                )
+            except subprocess.TimeoutExpired as timeout_exc:
+                test_results.append(
+                    TestExecutionResult(
+                        test_file=relative_test_path,
+                        passed=False,
+                        status="runtime_timeout",
+                        compiler=compiler,
+                        compile_command=compile_cmd,
+                        run_command=run_cmd,
+                        stdout=(timeout_exc.stdout or ""),
+                        stderr=(timeout_exc.stderr or "")
+                        + f"\nExecution timed out after {DEFAULT_RUN_TIMEOUT_SECONDS} seconds.",
+                    )
+                )
 
     passed = bool(test_results) and all(result.passed for result in test_results)
     return {
