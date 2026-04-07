@@ -1,3 +1,5 @@
+# Contributors: Dhruv Jain and Saksham Arora
+
 # LLM-Domain-Benchmark
 
 This repository implements a research-style benchmark for **LLM-powered code generation in the domain of Parallel Programming in C++**. It includes a curated 10-task benchmark dataset, zero-shot generation scripts, an extended CodeBLUE-style evaluator, a modular multi-agent ReAct pipeline for iterative code improvement, and a standalone GitHub crawler used to mine and synthesize grounded benchmark tasks.
