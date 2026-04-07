@@ -1,6 +1,6 @@
 # LLM-Domain-Benchmark
 
-This repository implements a research-style benchmark for **LLM-powered code generation in the domain of Parallel Programming in C++**. It includes a curated dataset of domain tasks, zero-shot generation scripts, an extended CodeBLUE-style evaluator, and a modular multi-agent ReAct pipeline for iterative code improvement.
+This repository implements a research-style benchmark for **LLM-powered code generation in the domain of Parallel Programming in C++**. It includes a curated 10-task benchmark dataset, zero-shot generation scripts, an extended CodeBLUE-style evaluator, a modular multi-agent ReAct pipeline for iterative code improvement, and a standalone GitHub crawler used to mine and synthesize grounded benchmark tasks.
 
 ## Domain
 
@@ -33,7 +33,49 @@ Each task lives under `dataset/task*/` and contains:
 - `agent/`: planner, coder, tester, debugger, reviewer, and ReAct loop
 - `scripts/`: zero-shot generation, agent generation, and full benchmark runners
 - `results/`: CSV outputs for zero-shot, agent, and comparison tables
-- `report.md`: compact research report template for the benchmark
+- `logs/`: benchmark, debugging, and experiment logs
+- `model_registry.json`: provider/model mapping for OpenAI, Google, and NVIDIA NIM backends
+- `web_crawler/`: standalone GitHub mining pipeline for discovering and synthesizing new benchmark tasks
+
+## Web Crawler
+
+The repository also includes a standalone `web_crawler/` module used to construct grounded benchmark tasks from real GitHub repositories. Its role is to support dataset creation by searching for parallel-programming artifacts such as issues, pull requests, and commits, ranking them by domain relevance and difficulty, and converting the strongest candidates into prompt-and-test benchmark tasks.
+
+At a high level, the crawler does the following:
+
+1. Loads search queries and domain/difficulty keywords from `web_crawler/config/`.
+2. Searches GitHub for relevant C++ parallel-programming repositories.
+3. Scrapes issues, pull requests, and commits from shortlisted repositories.
+4. Parses those artifacts into candidate tasks.
+5. Scores and filters candidates using keyword weights, complexity heuristics, and easy-task rejection.
+6. Uses an LLM-backed normalization step to synthesize grounded benchmark tasks from shortlisted artifacts.
+7. Writes the resulting dataset to `web_crawler/dataset/` along with cached provenance under `web_crawler/cache/`.
+
+Important crawler outputs:
+
+- `web_crawler/dataset/`: generated task folders with prompts, references, and tests
+- `web_crawler/cache/repositories.json`: cached repository shortlist
+- `web_crawler/cache/repos/`: cached repository artifact dumps
+- `web_crawler/cache/details/`: deeper grounding metadata for selected artifacts
+- `web_crawler/logs/crawler.log`: crawler execution log
+
+In the current repository snapshot, `web_crawler/dataset/` has been synchronized to the same 10-task benchmark layout used by the main `dataset/` directory (`task1` to `task10`).
+
+The crawler entry point is `web_crawler/main.py`. A typical run performs repository search, artifact scraping, candidate ranking, and dataset export in one pass.
+
+To run it:
+
+```bash
+cd web_crawler
+python main.py
+```
+
+Environment variables used by the crawler:
+
+- `GITHUB_TOKEN`: recommended for higher GitHub API rate limits
+- `OPENAI_API_KEY`: used for grounded task synthesis and normalization
+
+This crawler is separate from the benchmark runner under `scripts/`, but it complements the main project by providing a reproducible way to expand or regenerate the benchmark from publicly available software engineering artifacts.
 
 ## Benchmark Methodology
 
@@ -137,13 +179,22 @@ Agent-generated outputs are stored under:
 
 ## Models Used
 
-The repository is model-agnostic. Default placeholders are:
+The benchmark is model-agnostic, but the current repository is configured with the following registered models in `model_registry.json`:
 
-- `gemini`
-- `model2`
-- `model3`
+- `gpt-4.1-mini`
+- `gpt-4.1`
+- `gpt-5.4-2026-03-05`
+- `meta/llama-3.1-8b-instruct`
+- `qwen/qwen2.5-coder-32b-instruct`
+- `gemini-2.0-flash`
 
-You can replace them with any real model IDs supported by your OpenAI-compatible endpoint.
+The committed benchmark results in this repository focus on these three models:
+
+- `gpt-4.1-mini`
+- `meta/llama-3.1-8b-instruct`
+- `qwen/qwen2.5-coder-32b-instruct`
+
+Provider credentials are resolved from environment variables declared in `model_registry.json`.
 
 ## Running the Benchmark
 
@@ -158,21 +209,21 @@ This validates the repository structure, test harnesses, metric pipeline, and CS
 ### 2. Zero-shot generation only
 
 ```bash
-python scripts/generate_zero_shot.py --models gemini model2 model3 --attempts 10
-python evaluation/evaluate_all.py --models gemini model2 model3 --method Zero-shot --generated-root generated_code --output results/zero_shot_scores.csv
+python scripts/generate_zero_shot.py --models gpt-4.1-mini meta/llama-3.1-8b-instruct qwen/qwen2.5-coder-32b-instruct --attempts 10
+python evaluation/evaluate_all.py --models gpt-4.1-mini meta/llama-3.1-8b-instruct qwen/qwen2.5-coder-32b-instruct --method Zero-shot --generated-root generated_code --output results/zero_shot_scores.csv
 ```
 
 ### 3. Agent generation only
 
 ```bash
-python scripts/run_agent_generation.py --models gemini --max-rounds 3
-python evaluation/evaluate_all.py --models gemini --method Agent --generated-root generated_code/agent --output results/agent_scores.csv
+python scripts/run_agent_generation.py --models gpt-4.1-mini meta/llama-3.1-8b-instruct qwen/qwen2.5-coder-32b-instruct --max-rounds 3
+python evaluation/evaluate_all.py --models gpt-4.1-mini meta/llama-3.1-8b-instruct qwen/qwen2.5-coder-32b-instruct --method Agent --generated-root generated_code/agent --output results/agent_scores.csv
 ```
 
 ### 4. Full end-to-end benchmark
 
 ```bash
-python scripts/run_benchmark.py --zero-shot-models gemini model2 model3 --agent-models gemini --attempts 10 --max-rounds 3
+python scripts/run_benchmark.py --backend openai_compatible --zero-shot-models gpt-4.1-mini meta/llama-3.1-8b-instruct qwen/qwen2.5-coder-32b-instruct --agent-models gpt-4.1-mini meta/llama-3.1-8b-instruct qwen/qwen2.5-coder-32b-instruct --attempts 10 --max-rounds 3
 ```
 
 ## Results Format
@@ -189,9 +240,8 @@ Files:
 
 - `results/zero_shot_scores.csv`
 - `results/agent_scores.csv`
-- `results/comparison.csv`
 
-These CSVs are initialized with headers and will be populated after running the pipeline.
+In the current committed results, the `Pass@1` column is used to store empirical success rate over 10 trials for the zero-shot and agent result tables shown below.
 
 ## Experimental Goal
 
@@ -200,3 +250,21 @@ The intended hypothesis for this benchmark is:
 **A multi-agent ReAct-based coding pipeline produces stronger parallel C++ solutions than zero-shot generation, as measured by Pass@1 and Extended CodeBLUE.**
 
 The repository provides the full scaffold required to test that hypothesis in a reproducible way.
+
+## Benchmark Results
+
+The committed result CSVs correspond to the current 10-task benchmark snapshot and summarize zero-shot versus multi-agent ReAct performance for `gpt-4.1-mini`, `meta/llama-3.1-8b-instruct`, and `qwen/qwen2.5-coder-32b-instruct`.
+
+### Aggregate Comparison
+
+```csv
+Model,Metric,Zero-shot,Agent (3 rounds)
+gpt-4.1-mini,Pass@1,0.40,0.97
+gpt-4.1-mini,CodeBLEU,0.695,0.746
+meta/llama-3.1-8b-instruct,Pass@1,0.22,0.65
+meta/llama-3.1-8b-instruct,CodeBLEU,0.603,0.648
+qwen/qwen2.5-coder-32b-instruct,Pass@1,0.39,0.93
+qwen/qwen2.5-coder-32b-instruct,CodeBLEU,0.664,0.728
+Overall,Pass@1,0.34,0.85
+Overall,CodeBLEU,0.654,0.707
+```
