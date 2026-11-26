@@ -1,8 +1,8 @@
-# Contributors: Dhruv Jain and Saksham Arora
-
 # LLM-Domain-Benchmark
 
 This repository implements a research-style benchmark for **LLM-powered code generation in the domain of Parallel Programming in C++**. It includes a curated 10-task benchmark dataset, zero-shot generation scripts, an extended CodeBLUE-style evaluator, a modular multi-agent ReAct pipeline for iterative code improvement, and a standalone GitHub crawler used to mine and synthesize grounded benchmark tasks.
+
+Contributors are Dhruv Jain and Saksham Arora.
 
 ## Domain
 
@@ -30,12 +30,11 @@ Each task lives under `dataset/task*/` and contains:
 
 - `dataset/`: benchmark tasks and references
 - `prompts/all_prompts.json`: central task catalog and compile metadata
-- `generated_code/`: zero-shot and agent-generated solutions
+- `generated_code/`: local output for zero-shot and agent-generated solutions
 - `evaluation/`: Pass@1, Extended CodeBLUE, and compile/run helpers
 - `agent/`: planner, coder, tester, debugger, reviewer, and ReAct loop
 - `scripts/`: zero-shot generation, agent generation, and full benchmark runners
-- `results/`: CSV outputs for zero-shot, agent, and comparison tables
-- `logs/`: benchmark, debugging, and experiment logs
+- `results/`: published zero-shot and agent score tables, plus CSVs written by local runs
 - `model_registry.json`: provider/model mapping for OpenAI, Google, and NVIDIA NIM backends
 - `web_crawler/`: standalone GitHub mining pipeline for discovering and synthesizing new benchmark tasks
 
@@ -61,7 +60,7 @@ Important crawler outputs:
 - `web_crawler/cache/details/`: deeper grounding metadata for selected artifacts
 - `web_crawler/logs/crawler.log`: crawler execution log
 
-In the current repository snapshot, `web_crawler/dataset/` has been synchronized to the same 10-task benchmark layout used by the main `dataset/` directory (`task1` to `task10`).
+The curated 10-task benchmark is in the top-level `dataset/` directory. The crawler writes its dataset, cache, and logs locally.
 
 The crawler entry point is `web_crawler/main.py`. A typical run performs repository search, artifact scraping, candidate ranking, and dataset export in one pass.
 
@@ -69,7 +68,8 @@ To run it:
 
 ```bash
 cd web_crawler
-python main.py
+python3 -m pip install -r requirements.txt
+python3 main.py
 ```
 
 Environment variables used by the crawler:
@@ -200,13 +200,25 @@ Provider credentials are resolved from environment variables declared in `model_
 
 ## Running the Benchmark
 
+Use Python 3.10 or later and a C++17 compiler. To exercise all ten tasks with parallel execution, install a compiler with OpenMP support and an MPI distribution providing `mpic++` and `mpiexec`.
+
+For provider-backed runs, copy `.env.example` to `.env` at the repository root, fill in the keys for the providers you use, then load the file in your shell.
+
+```bash
+set -a
+source .env
+set +a
+```
+
+The evaluator compiles and executes candidate C++ with your account's permissions. For generated or third-party candidates, run evaluation in an isolated environment with networking disabled and no credentials or sensitive files mounted.
+
 ### 1. Smoke test with reference solutions
 
 ```bash
 python scripts/run_benchmark.py --backend reference
 ```
 
-This validates the repository structure, test harnesses, metric pipeline, and CSV generation without calling an external API.
+This validates the test harnesses, metrics, and CSV generation without calling an external API. Run it in a disposable checkout if you want to preserve the published CSVs because the runner writes new results to the same paths.
 
 ### 2. Zero-shot generation only
 
